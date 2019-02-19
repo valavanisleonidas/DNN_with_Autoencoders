@@ -1,8 +1,7 @@
 import numpy as np
 import os
 
-ROOT_DIR = os.path.dirname(os.path.abspath(__file__))  # Directory of the script
-mnist_dir = os.path.join(ROOT_DIR, 'data/mnist/')
+
 
 
 def _load_filename(prefix, path):
@@ -20,7 +19,7 @@ def _load_filename(prefix, path):
     return data, labels
 
 
-def load_mnist(path=mnist_dir):
+def load_mnist(path=None):
     print("Loading mnist....")
     """
         Load mnist
@@ -42,6 +41,10 @@ def load_mnist(path=mnist_dir):
         t10k-labels-idx1-ubyte:  test set labels
 
     """
+    if path is None:
+        root = os.path.dirname(os.path.abspath(__file__))  # Directory of the script
+        path = os.path.join(root, 'data/mnist/')
+
     training_images, training_labels = _load_filename("train", path)
     test_images, test_labels = _load_filename("t10k", path)
 
@@ -55,4 +58,4 @@ def load_mnist(path=mnist_dir):
 
 
 if __name__ == '__main__':
-    pass
+    load_mnist()
