@@ -2,8 +2,6 @@ import numpy as np
 import os
 
 
-
-
 def _load_filename(prefix, path):
     int_type = np.dtype('int32').newbyteorder('>')
     n_meta_data_bytes = 4 * int_type.itemsize
@@ -49,8 +47,8 @@ def load_mnist(path=None):
     test_images, test_labels = _load_filename("t10k", path)
 
     # Make the images Binary
-    training_images = np.where(training_images > 128, 1, 0)
-    test_images = np.where(test_images > 128, 1, 0)
+    training_images = training_images.astype('float32') / 255
+    test_images = test_images.astype('float32') / 255
     print("-----------------------------------------")
     print("           mnist is Loaded")
     print("-----------------------------------------")
