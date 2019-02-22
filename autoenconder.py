@@ -3,7 +3,6 @@ from keras.models import Model
 from keras import regularizers
 
 
-
 class AutoEncoder(object):
     def __init__(self, input_dim, encode_dim, l2_value=0, encode_activation='relu'):
         self.input_dim = input_dim
@@ -28,6 +27,7 @@ class AutoEncoder(object):
         self.model = model
 
     def train(self, x_train, x_test, n_epochs=50, batch_size=256, loss='binary_crossentropy', optimizer='adadelta'):
+
         self.model.compile(optimizer=optimizer, loss=loss)
         self.model.fit(x_train, x_train,
                        epochs=n_epochs,

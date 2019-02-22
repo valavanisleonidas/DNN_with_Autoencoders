@@ -1,42 +1,34 @@
+from keras import metrics
+from keras.utils import to_categorical
+
 import Utils
 import numpy as np
 from autoenconder import AutoEncoder
-import matplotlib.pyplot as plt
 from keras.models import Model
 from keras.layers import Input, Dense
+from sklearn import metrics
 
 
-def plot_decoded_imgs(x_test, reconstructed):
-    plt.figure(figsize=(20, 4))
-    for i in range(10):
-        # display original
-        ax = plt.subplot(2, 10, i + 1)
-        plt.imshow(x_test[i].reshape(28, 28))
-        ax.get_xaxis().set_visible(False)
-        ax.get_yaxis().set_visible(False)
-
-        # display reconstruction
-        ax = plt.subplot(2, 10, i + 11)
-        plt.imshow(reconstructed[i].reshape(28, 28))
-        ax.get_xaxis().set_visible(False)
-        ax.get_yaxis().set_visible(False)
-
-    plt.show()
+encoding_dim = 32  # 32 floats -> compression of factor 24.5, assuming the input is 784 floats
+input_dimenions = 784
+batch_size = 32
+epochs = 30
 
 
-if __name__ == "__main__":
-    x_train, _, x_test, _ = Utils.load_mnist()
-    x_train = x_train.reshape((len(x_train), np.prod(x_train.shape[1:])))
-    x_test = x_test.reshape((len(x_test), np.prod(x_test.shape[1:])))
+def ex_3_1():
+    # x_train, _, x_test, _ = Utils.load_mnist()
+    # x_train = x_train.reshape((len(x_train), np.prod(x_train.shape[1:])))
+    # x_test = x_test.reshape((len(x_test), np.prod(x_test.shape[1:])))
 
-    encoding_dim = 32  # 32 floats -> compression of factor 24.5, assuming the input is 784 floats
+    x_train = np.loadtxt('binMNIST_data/bindigit_trn.csv', delimiter=',', dtype=float)
+    x_test = np.loadtxt('binMNIST_data/bindigit_tst.csv', delimiter=',', dtype=float)
 
     # this is our input placeholder
-    input_img = Input(shape=(784,))
+    input_img = Input(shape=(input_dimenions,))
     # "encoded" is the encoded representation of the input
     encoded = Dense(encoding_dim, activation='relu')(input_img)
     # "decoded" is the lossy reconstruction of the input
-    decoded = Dense(784, activation='sigmoid')(encoded)
+    decoded = Dense(input_dimenions, activation='sigmoid')(encoded)
 
     autoencoder = Model(input_img, decoded)
 
@@ -50,13 +42,51 @@ if __name__ == "__main__":
 
     autoencoder.compile(optimizer='adadelta', loss='binary_crossentropy')
     autoencoder.fit(x_train, x_train,
-                    epochs=50,
-                    batch_size=256,
-                    shuffle=True,
-                    validation_data=(x_test, x_test))
-    
+                    epochs=epochs,
+                    batch_size=batch_size,
+                    shuffle=True)
+    # validation_data=(x_test, x_test))
+
     # autoencoder.train(x_train, x_test, n_epochs=15)
 
     encoded_imgs = encoder.predict(x_test)
     decoded_imgs = decoder.predict(encoded_imgs)
-    plot_decoded_imgs(x_test, decoded_imgs)
+    Utils.plot_decoded_imgs(x_test, decoded_imgs)
+
+
+def ex_3_2(num_of_nodes_in_hidden_layers):
+    x_train = np.loadtxt('binMNIST_data/bindigit_trn.csv', delimiter=',', dtype=float)
+    x_test = np.loadtxt('binMNIST_data/bindigit_tst.csv', delimiter=',', dtype=float)
+
+    y_train = np.loadtxt('binMNIST_data/targetdigit_trn.csv', delimiter=',', dtype=float)
+    y_test = np.loadtxt('binMNIST_data/targetdigit_tst.csv', delimiter=',', dtype=float)
+
+    target_train = to_categorical(y_train, num_classes=10)
+
+    input_layer = Input(shape=(input_dimenions,))
+    layer = input_layer
+    # encode
+    for hidden_dim in num_of_nodes_in_hidden_layers:
+        layer = Dense(hidden_dim, activation='relu')(layer)
+    num_of_nodes_in_hidden_layers.pop(-1)
+
+    # decode
+    for hidden_dim in reversed(num_of_nodes_in_hidden_layers):
+        layer = Dense(hidden_dim, activation='relu')(layer)
+    layer = Dense(input_dimenions, activation='relu')(layer)
+
+    out = Dense(10, activation='sigmoid')(layer)
+
+    model = Model(input_layer, out)
+    model.compile(optimizer='adadelta', loss='mean_squared_error', metrics=['accuracy'])
+    model.fit(x_train, target_train,
+              epochs=epochs,
+              batch_size=batch_size,
+              shuffle=True)
+
+    predictions = np.argmax(model.predict(x_test), axis=1)
+    print(metrics.classification_report(y_test, predictions))
+
+if __name__ == "__main__":
+    # ex_3_1()
+    ex_3_2([128, 64, 32])
