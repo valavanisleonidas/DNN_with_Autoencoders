@@ -23,36 +23,36 @@ def ex_3_1():
     x_train = np.loadtxt('binMNIST_data/bindigit_trn.csv', delimiter=',', dtype=float)
     x_test = np.loadtxt('binMNIST_data/bindigit_tst.csv', delimiter=',', dtype=float)
 
-    # this is our input placeholder
-    input_img = Input(shape=(input_dimenions,))
-    # "encoded" is the encoded representation of the input
-    encoded = Dense(encoding_dim, activation='relu')(input_img)
-    # "decoded" is the lossy reconstruction of the input
-    decoded = Dense(input_dimenions, activation='sigmoid')(encoded)
-
-    autoencoder = Model(input_img, decoded)
-
-    # autoencoder = AutoEncoder(input_dim=x_train.shape[1], encode_dim=32)
-
-    encoder = Model(input_img, encoded)
-
-    encoded_input = Input(shape=(32,))
-    decoder_layer = autoencoder.layers[-1]
-    decoder = Model(encoded_input, decoder_layer(encoded_input))
-
-    autoencoder.compile(optimizer='adadelta', loss='binary_crossentropy')
-    autoencoder.fit(x_train, x_train,
-                    epochs=epochs,
-                    batch_size=batch_size,
-                    shuffle=True)
-    # validation_data=(x_test, x_test))
-
-    # autoencoder.train(x_train, x_test, n_epochs=15)
-
-    encoded_imgs = encoder.predict(x_test)
-    decoded_imgs = decoder.predict(encoded_imgs)
-    Utils.plot_decoded_imgs(x_test, decoded_imgs)
-
+    # # this is our input placeholder
+    # input_img = Input(shape=(input_dimenions,))
+    # # "encoded" is the encoded representation of the input
+    # encoded = Dense(encoding_dim, activation='relu')(input_img)
+    # # "decoded" is the lossy reconstruction of the input
+    # decoded = Dense(input_dimenions, activation='sigmoid')(encoded)
+    #
+    # autoencoder = Model(input_img, decoded)
+    #
+    # # autoencoder = AutoEncoder(input_dim=x_train.shape[1], encode_dim=32)
+    #
+    # encoder = Model(input_img, encoded)
+    #
+    # encoded_input = Input(shape=(32,))
+    # decoder_layer = autoencoder.layers[-1]
+    # decoder = Model(encoded_input, decoder_layer(encoded_input))
+    #
+    # autoencoder.compile(optimizer='adadelta', loss='binary_crossentropy')
+    # autoencoder.fit(x_train, x_train,
+    #                 epochs=epochs,
+    #                 batch_size=batch_size,
+    #                 shuffle=True)
+    # # validation_data=(x_test, x_test))
+    #
+    # # autoencoder.train(x_train, x_test, n_epochs=15)
+    #
+    # encoded_imgs = encoder.predict(x_test)
+    # decoded_imgs = decoder.predict(encoded_imgs)
+    # Utils.plot_decoded_imgs(x_test, decoded_imgs)
+    model = AutoEncoder(input_dim=x_train.shape[1], encode_dim=32)
 
 def ex_3_2(num_of_nodes_in_hidden_layers):
     x_train = np.loadtxt('binMNIST_data/bindigit_trn.csv', delimiter=',', dtype=float)
@@ -88,5 +88,5 @@ def ex_3_2(num_of_nodes_in_hidden_layers):
     print(metrics.classification_report(y_test, predictions))
 
 if __name__ == "__main__":
-    # ex_3_1()
-    ex_3_2([128, 64, 32])
+    ex_3_1()
+    # ex_3_2([128, 64, 32])

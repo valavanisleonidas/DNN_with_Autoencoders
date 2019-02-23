@@ -58,6 +58,7 @@ import matplotlib.pyplot as plt
 
 def plot_decoded_imgs(x_test, reconstructed):
     plt.figure(figsize=(20, 4))
+    plt.gray()
     for i in range(10):
         # display original
         ax = plt.subplot(2, 10, i + 1)
