@@ -1,9 +1,9 @@
 from keras import metrics
 from keras.utils import to_categorical
-
+import matplotlib.pyplot as plt
 import Utils
 import numpy as np
-from autoenconder import AutoEncoder
+from autoenconder import AutoEncoder, ErrorsCallback
 from keras.models import Model
 from keras.layers import Input, Dense
 from sklearn import metrics
@@ -91,10 +91,15 @@ def ex_3_1_v2():
     x_train = np.loadtxt('binMNIST_data/bindigit_trn.csv', delimiter=',', dtype=float)
     x_test = np.loadtxt('binMNIST_data/bindigit_tst.csv', delimiter=',', dtype=float)
 
-    model = AutoEncoder(encode_dim=32, input_dim=784, callbacks=[])
-    model.train(x_train=x_train, x_test=x_test, n_epochs=100, batch_size=128)
+    error_callback = ErrorsCallback(x_train, x_train, x_test, x_test)
+
+    model = AutoEncoder(encode_dim=32, input_dim=784)
+    model.train(x_train=x_train, n_epochs=100, batch_size=64, callbacks=[error_callback])
     reconstructed = model.predict(x_test)
 
+
+    plt.plot(error_callback.mse_test)
+    plt.show()
     Utils.plot_decoded_imgs(x_test, reconstructed)
 
 
