@@ -7,6 +7,7 @@ from autoenconder import AutoEncoder, ErrorsCallback
 from keras.models import Model
 from keras.layers import Input, Dense
 from sklearn import metrics
+import time
 
 encoding_dim = 32  # 32 floats -> compression of factor 24.5, assuming the input is 784 floats
 input_dimenions = 784
@@ -90,17 +91,66 @@ def ex_3_2(num_of_nodes_in_hidden_layers):
 def ex_3_1_v2():
     x_train = np.loadtxt('binMNIST_data/bindigit_trn.csv', delimiter=',', dtype=float)
     x_test = np.loadtxt('binMNIST_data/bindigit_tst.csv', delimiter=',', dtype=float)
+    first_dot = False
+    second_dot = True
 
-    error_callback = ErrorsCallback(x_train, x_train, x_test, x_test)
+    if second_dot:
 
-    model = AutoEncoder(encode_dim=32, input_dim=784)
-    model.train(x_train=x_train, n_epochs=100, batch_size=64, callbacks=[error_callback])
-    reconstructed = model.predict(x_test)
+        encod_dims = [1000, 1500, 2000, 2500]
+        error_trains = []
+        n_epochs = 100
+        times = []
+        for encode_dim in encod_dims:
+            start_time = time.time()
+            error_callback = ErrorsCallback(x_train, x_train, x_test, x_test)
 
+            model1 = AutoEncoder(encode_dim=encode_dim, input_dim=784, l2_value=0.01)
 
-    plt.plot(error_callback.mse_test)
-    plt.show()
-    Utils.plot_decoded_imgs(x_test, reconstructed)
+            model1.train(x_train=x_train, n_epochs=n_epochs, batch_size=128, callbacks=[error_callback],
+                         loss='binary_crossentropy')
+
+            reconstructed = model1.predict(x_test)
+            end_time = time.time() - start_time
+            times.append(str(round(end_time, 2)))
+            error_trains.append(error_callback.mse_train)
+
+            # Utils.plot_decoded_imgs(x_test, reconstructed)
+
+        legends = ['1000 Nodes, ' + times[0] + ' sec',
+                   '1500 Nodes, ' + times[1] + ' sec',
+                   '2000 Nodes, ' + times[2] + ' sec',
+                   '2500 Nodes, ' + times[3] + ' sec']
+        Utils.plot_error(error_trains, legend_names=legends, num_epochs=len(error_trains[0]),
+                         title='Auto encoder for various encoding dimensions')
+
+    if first_dot:
+        encod_dims = [512, 256, 128, 64, 32]
+        error_trains = []
+        n_epochs = 100
+        times = []
+        for encode_dim in encod_dims:
+            start_time = time.time()
+            error_callback = ErrorsCallback(x_train, x_train, x_test, x_test)
+
+            model1 = AutoEncoder(encode_dim=encode_dim, input_dim=784)
+
+            model1.train(x_train=x_train, n_epochs=n_epochs, batch_size=128, callbacks=[error_callback],
+                         loss='binary_crossentropy')
+
+            reconstructed = model1.predict(x_test)
+            end_time = time.time() - start_time
+            times.append(str(round(end_time, 2)))
+            error_trains.append(error_callback.mse_train)
+
+            # Utils.plot_decoded_imgs(x_test, reconstructed)
+
+        legends = ['512 Nodes, ' + times[0] + ' sec',
+                   '256 Nodes, ' + times[1] + ' sec',
+                   '128 Nodes, ' + times[2] + ' sec',
+                   '64 Nodes, ' + times[3] + ' sec',
+                   '32 Nodes, ' + times[4] + ' sec']
+        Utils.plot_error(error_trains, legend_names=legends, num_epochs=len(error_trains[0]),
+                         title='Auto encoder for various encoding dimensions')
 
 
 if __name__ == "__main__":

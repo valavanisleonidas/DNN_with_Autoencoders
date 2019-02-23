@@ -14,7 +14,7 @@ class AutoEncoder(object):
         self.encode_activation = encode_activation
         self._create_model()
 
-    def train(self, x_train, callbacks, n_epochs=50, batch_size=128, loss='mse',
+    def train(self, x_train, callbacks, n_epochs, batch_size=128, loss='mse',
               optimizer=SGD(lr=0.1, momentum=0.9)):
 
         self.model.compile(optimizer=optimizer, loss=loss)
