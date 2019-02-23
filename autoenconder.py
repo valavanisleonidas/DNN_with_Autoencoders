@@ -16,7 +16,6 @@ class AutoEncoder(object):
 
     def train(self, x_train, callbacks, n_epochs, batch_size=128, loss='mse',
               optimizer=SGD(lr=0.1, momentum=0.9)):
-
         self.model.compile(optimizer=optimizer, loss=loss)
 
         self.model.fit(x_train, x_train,
@@ -26,9 +25,9 @@ class AutoEncoder(object):
                        callbacks=callbacks)
 
     def predict(self, x_test):
-        encoded_imgs = self.encoder.predict(x_test)
-        decoded_imgs = self.decoder.predict(encoded_imgs)
-        return decoded_imgs
+        encoded = self.encoder.predict(x_test)
+        decoded = self.decoder.predict(encoded)
+        return decoded
 
     def _create_model(self):
         original_input = Input(shape=(self.input_dim,))

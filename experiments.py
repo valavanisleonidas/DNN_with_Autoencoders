@@ -93,22 +93,38 @@ def ex_3_1_v2():
     x_test = np.loadtxt('binMNIST_data/bindigit_tst.csv', delimiter=',', dtype=float)
 
     first_dot = False
-    second_dot = True
+    second_dot = False
     third_dot = False
-
+    fourth_dot = True
     error_trains = []
-    n_epochs = 100
+    n_epochs = 10
+
+    if fourth_dot:
+        n_nodes = [100, 200, 400]
+        for nodes in n_nodes:
+            error_callback = ErrorsCallback(x_train, x_train, x_test, x_test)
+            model1 = AutoEncoder(encode_dim=nodes, input_dim=784, l2_value=0., encode_activation='relu')
+
+            model1.train(x_train=x_train, n_epochs=n_epochs, batch_size=128, callbacks=[error_callback],
+                         loss='binary_crossentropy')
+            reconstructed = model1.predict(x_test)
+
+            
+            w = model1.model.layers[-1].get_weights()
+
+            plt.imshow(w[1].reshape(28, 28))
+            plt.show()
+            error_trains.append(error_callback.mse_train)
 
     if third_dot:
         noise_factors = [0., 0.1, 0.2, 0.3, 0.4]
         for noise in noise_factors:
+            x_train_noisy = Utils.add_noise(x_train, noise)
+            x_test_noisy = Utils.add_noise(x_test, noise)
 
-            x_train = Utils.add_noise(x_train, noise)
-            x_test = Utils.add_noise(x_test, noise)
+            error_callback = ErrorsCallback(x_train_noisy, x_train, x_test_noisy, x_test)
 
-            error_callback = ErrorsCallback(x_train, x_train, x_test, x_test)
-
-            model1 = AutoEncoder(encode_dim=128, input_dim=784, l2_value=0., encode_activation='sigmoid')
+            model1 = AutoEncoder(encode_dim=128, input_dim=784, l2_value=0., encode_activation='relu')
 
             model1.train(x_train=x_train, n_epochs=n_epochs, batch_size=128, callbacks=[error_callback],
                          loss='binary_crossentropy')
@@ -117,6 +133,8 @@ def ex_3_1_v2():
 
             error_trains.append(error_callback.mse_train)
 
+        legends = ['noise: 0%', 'noise: 10%', 'noise: 20%', 'noise: 30%', 'noise: 40%']
+        Utils.plot_error(error_trains, legend_names=legends, num_epochs=n_epochs, title='Error on Epochs with Noise')
 
     if second_dot:
         activations = ['sigmoid', 'relu']
@@ -172,6 +190,31 @@ def ex_3_1_v2():
 
 
 if __name__ == "__main__":
+    # x_train = np.loadtxt('binMNIST_data/bindigit_trn.csv', delimiter=',', dtype=float)
+    # x_test = np.loadtxt('binMNIST_data/bindigit_tst.csv', delimiter=',', dtype=float)
+
+    # x_noise_train = Utils.add_noise(x_train, 0.3)
+    # x_noise_test = Utils.add_noise(x_test, 0.3)
+
+    # error_callback = ErrorsCallback(x_noise_train, x_train, x_noise_test, x_test)
+    #
+    # model1 = AutoEncoder(encode_dim=128, input_dim=784, l2_value=0., encode_activation='relu')
+    #
+    # model1.train(x_train=x_train, n_epochs=200, batch_size=64, callbacks=[error_callback],
+    #              loss='binary_crossentropy')
+    #
+    # reconstructed = model1.predict(x_test)
+    #
+    # plt.gca()
+    # plt.imshow(x_test[10].reshape(28, 28))
+    # plt.show()
+    #
+    # plt.imshow(x_noise_test[10].reshape(28, 28))
+    # plt.show()
+    #
+    # plt.imshow(reconstructed[10].reshape(28, 28))
+    # plt.show()
+
     # ex_3_1()
     ex_3_1_v2()
     # ex_3_2([128, 64, 32])

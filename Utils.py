@@ -1,12 +1,21 @@
 import numpy as np
 import os
 import matplotlib.pyplot as plt
+import copy
 
 
-def add_noise(x, factor):
-    x_noise = x + factor * np.random.normal(loc=0., scale=0.5, size=x.shape)
-    x_noise = np.clip(x_noise, 0, 1)
-    return x_noise
+def add_noise(x, percentage):
+    noisy = copy.deepcopy(x)
+
+    for i, img in enumerate(copy.deepcopy(x)):
+        N = len(img)
+        n_indices = int(percentage * N)
+        indices = np.random.choice(np.arange(N), n_indices,replace=False)
+        img[indices] += np.random.normal(loc=0., scale=1, size=img[indices].shape)
+        img = np.clip(img, 0, 1)
+        noisy[i] = img
+
+    return noisy
 
 
 def plot_decoded_imgs(x_test, reconstructed):
