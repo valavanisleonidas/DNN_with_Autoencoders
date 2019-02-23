@@ -91,37 +91,55 @@ def ex_3_2(num_of_nodes_in_hidden_layers):
 def ex_3_1_v2():
     x_train = np.loadtxt('binMNIST_data/bindigit_trn.csv', delimiter=',', dtype=float)
     x_test = np.loadtxt('binMNIST_data/bindigit_tst.csv', delimiter=',', dtype=float)
+
     first_dot = False
     second_dot = True
+    third_dot = False
 
-    if second_dot:
+    error_trains = []
+    n_epochs = 100
 
-        encod_dims = [1000, 1500, 2000, 2500]
-        error_trains = []
-        n_epochs = 100
-        times = []
-        for encode_dim in encod_dims:
-            start_time = time.time()
+    if third_dot:
+        noise_factors = [0., 0.1, 0.2, 0.3, 0.4]
+        for noise in noise_factors:
+
+            x_train = Utils.add_noise(x_train, noise)
+            x_test = Utils.add_noise(x_test, noise)
+
             error_callback = ErrorsCallback(x_train, x_train, x_test, x_test)
 
-            model1 = AutoEncoder(encode_dim=encode_dim, input_dim=784, l2_value=0.01)
+            model1 = AutoEncoder(encode_dim=128, input_dim=784, l2_value=0., encode_activation='sigmoid')
 
             model1.train(x_train=x_train, n_epochs=n_epochs, batch_size=128, callbacks=[error_callback],
                          loss='binary_crossentropy')
 
             reconstructed = model1.predict(x_test)
-            end_time = time.time() - start_time
-            times.append(str(round(end_time, 2)))
+
+            error_trains.append(error_callback.mse_train)
+
+
+    if second_dot:
+        activations = ['sigmoid', 'relu']
+        error_trains = []
+        n_epochs = 200
+
+        for activation in activations:
+            error_callback = ErrorsCallback(x_train, x_train, x_test, x_test)
+
+            model1 = AutoEncoder(encode_dim=900, input_dim=784, l2_value=0.01, encode_activation=activation)
+
+            model1.train(x_train=x_train, n_epochs=n_epochs, batch_size=128, callbacks=[error_callback],
+                         loss='binary_crossentropy')
+
+            reconstructed = model1.predict(x_test)
+
             error_trains.append(error_callback.mse_train)
 
             # Utils.plot_decoded_imgs(x_test, reconstructed)
 
-        legends = ['1000 Nodes, ' + times[0] + ' sec',
-                   '1500 Nodes, ' + times[1] + ' sec',
-                   '2000 Nodes, ' + times[2] + ' sec',
-                   '2500 Nodes, ' + times[3] + ' sec']
-        Utils.plot_error(error_trains, legend_names=legends, num_epochs=len(error_trains[0]),
-                         title='Auto encoder for various encoding dimensions')
+        legends = ['sigmoid', 'relu']
+        Utils.plot_error(error_trains, legend_names=legends, num_epochs=n_epochs,
+                         title='1500 Nodes l2=0.0001')
 
     if first_dot:
         encod_dims = [512, 256, 128, 64, 32]

@@ -4,9 +4,10 @@ import matplotlib.pyplot as plt
 
 
 def add_noise(x, factor):
-    x = x + factor * np.random.normal(loc=0., scale=0.5, size=x.shape)
-    x = np.clip()
-    return x
+    x_noise = x + factor * np.random.normal(loc=0., scale=0.5, size=x.shape)
+    x_noise = np.clip(x_noise, 0, 1)
+    return x_noise
+
 
 def plot_decoded_imgs(x_test, reconstructed):
     plt.figure(figsize=(20, 4))
@@ -34,6 +35,7 @@ def plot_error(error, legend_names, num_epochs, title):
 
     # plt.ylim(0, 10)
     plt.xlim(-0.5, num_epochs)
+    plt.ylim(0., 1.)
 
     epochs = np.arange(0, num_epochs, 1)
 
