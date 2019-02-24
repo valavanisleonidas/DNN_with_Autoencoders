@@ -97,7 +97,7 @@ def ex_3_1_v2():
     third_dot = False
     fourth_dot = True
     error_trains = []
-    n_epochs = 10
+    n_epochs = 200
 
     if fourth_dot:
         n_nodes = [100, 200, 400]
@@ -107,13 +107,13 @@ def ex_3_1_v2():
 
             model1.train(x_train=x_train, n_epochs=n_epochs, batch_size=128, callbacks=[error_callback],
                          loss='binary_crossentropy')
-            reconstructed = model1.predict(x_test)
+            # reconstructed = model1.predict(x_test)
 
-            
-            w = model1.model.layers[-1].get_weights()
+            w = model1.model.layers[-1].get_weights()[0]
 
-            plt.imshow(w[1].reshape(28, 28))
-            plt.show()
+            for unit in w:
+                plt.imshow(unit.reshape(28, 28))
+                plt.show()
             error_trains.append(error_callback.mse_train)
 
     if third_dot:
