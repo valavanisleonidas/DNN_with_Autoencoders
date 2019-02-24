@@ -1,57 +1,15 @@
 from keras import metrics
+from keras.optimizers import SGD
 from keras.utils import to_categorical
 import matplotlib.pyplot as plt
 import Utils
 import numpy as np
 from autoenconder import AutoEncoder, ErrorsCallback
-from keras.models import Model
+from keras.models import Model, Sequential
 from keras.layers import Input, Dense
 from sklearn import metrics
 import time
-
-encoding_dim = 32  # 32 floats -> compression of factor 24.5, assuming the input is 784 floats
-input_dimenions = 784
-batch_size = 32
-epochs = 30
-
-
-def ex_3_1():
-    # x_train, _, x_test, _ = Utils.load_mnist()
-    # x_train = x_train.reshape((len(x_train), np.prod(x_train.shape[1:])))
-    # x_test = x_test.reshape((len(x_test), np.prod(x_test.shape[1:])))
-
-    x_train = np.loadtxt('binMNIST_data/bindigit_trn.csv', delimiter=',', dtype=float)
-    x_test = np.loadtxt('binMNIST_data/bindigit_tst.csv', delimiter=',', dtype=float)
-
-    # this is our input placeholder
-    input_img = Input(shape=(input_dimenions,))
-    # "encoded" is the encoded representation of the input
-    encoded = Dense(encoding_dim, activation='relu')(input_img)
-    # "decoded" is the lossy reconstruction of the input
-    decoded = Dense(input_dimenions, activation='sigmoid')(encoded)
-
-    autoencoder = Model(input_img, decoded)
-
-    # autoencoder = AutoEncoder(input_dim=x_train.shape[1], encode_dim=32)
-
-    encoder = Model(input_img, encoded)
-
-    encoded_input = Input(shape=(32,))
-    decoder_layer = autoencoder.layers[-1]
-    decoder = Model(encoded_input, decoder_layer(encoded_input))
-
-    autoencoder.compile(optimizer='adadelta', loss='binary_crossentropy')
-    autoencoder.fit(x_train, x_train,
-                    epochs=epochs,
-                    batch_size=batch_size,
-                    shuffle=True)
-    # validation_data=(x_test, x_test))
-
-    # autoencoder.train(x_train, x_test, n_epochs=15)
-
-    encoded_imgs = encoder.predict(x_test)
-    decoded_imgs = decoder.predict(encoded_imgs)
-    Utils.plot_decoded_imgs(x_test, decoded_imgs)
+from keras import backend as K
 
 
 def ex_3_2(num_of_nodes_in_hidden_layers):
@@ -63,28 +21,48 @@ def ex_3_2(num_of_nodes_in_hidden_layers):
 
     target_train = to_categorical(y_train, num_classes=10)
 
-    input_layer = Input(shape=(input_dimenions,))
-    layer = input_layer
-    # encode
+    n_epochs = 10
+    batch_size = 128
+
+    output_train = x_train
+
+    final_model = Sequential()
+
     for hidden_dim in num_of_nodes_in_hidden_layers:
-        layer = Dense(hidden_dim, activation='relu')(layer)
-    num_of_nodes_in_hidden_layers.pop(-1)
+        model1 = AutoEncoder(encode_dim=hidden_dim, input_dim=output_train.shape[1], l2_value=0.,
+                             encode_activation='relu')
 
-    # decode
-    for hidden_dim in reversed(num_of_nodes_in_hidden_layers):
-        layer = Dense(hidden_dim, activation='relu')(layer)
-    layer = Dense(input_dimenions, activation='relu')(layer)
+        # error_callback = ErrorsCallback(output_train, output_train, output_test, output_test)
 
-    out = Dense(10, activation='sigmoid')(layer)
+        model1.train(x_train=output_train, n_epochs=n_epochs, batch_size=batch_size, callbacks=[],
+                     loss='binary_crossentropy')
 
-    model = Model(input_layer, out)
-    model.compile(optimizer='adadelta', loss='mean_squared_error', metrics=['accuracy'])
-    model.fit(x_train, target_train,
-              epochs=epochs,
-              batch_size=batch_size,
-              shuffle=True)
+        final_model.add(model1.model.layers[-2])
 
-    predictions = np.argmax(model.predict(x_test), axis=1)
+        # output_train = model1.encoder.predict(output_train)
+
+        get_hidden_layer_output = K.function([model1.model.layers[0].input],
+                                          [model1.model.layers[-2].output])
+
+        output_train = get_hidden_layer_output([output_train])[0]
+
+        print(output_train.shape)
+
+    final_model.add(Dense(10, activation='softmax'))
+
+    final_model.compile(optimizer=SGD(lr=0.1, momentum=0.9), loss='mean_squared_error', metrics=['accuracy'])
+
+    history = final_model.fit(x_train, target_train,
+                              epochs=n_epochs,
+                              batch_size=batch_size,
+                              shuffle=True)
+
+    predictions = final_model.predict(x_train)
+    predictions_test = final_model.predict(x_test)
+
+    # print(predictions)
+
+    predictions = np.argmax(final_model.predict(x_test), axis=1)
     print(metrics.classification_report(y_test, predictions))
 
 
@@ -215,6 +193,5 @@ if __name__ == "__main__":
     # plt.imshow(reconstructed[10].reshape(28, 28))
     # plt.show()
 
-    # ex_3_1()
-    ex_3_1_v2()
-    # ex_3_2([128, 64, 32])
+    # ex_3_1_v2()
+    ex_3_2([512, 256, 128])
