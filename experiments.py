@@ -10,6 +10,7 @@ from keras.layers import Input, Dense, BatchNormalization, Dropout
 from sklearn import metrics
 import time
 from keras import backend as K
+from keras.utils import plot_model
 
 
 def ex_3_2_expeirment():
@@ -73,6 +74,14 @@ def ex_3_2_expeirment():
     nad_decoded2_da = Dense(800, activation='sigmoid')(nad_encoded2_da_bn)
     nad_decoded1_da = Dense(784, activation='sigmoid')(nad_decoded2_da)
 
+    # Setting up the weights of the not-as-deep autoencoder
+    # nad_deep_autoencoder.layers[1].set_weights(autoencoder1.layers[2].get_weights())  # first dense layer
+    # nad_deep_autoencoder.layers[2].set_weights(autoencoder1.layers[3].get_weights())  # first bn layer
+    # nad_deep_autoencoder.layers[3].set_weights(autoencoder2.layers[2].get_weights())  # second dense layer
+    # nad_deep_autoencoder.layers[4].set_weights(autoencoder2.layers[3].get_weights())  # second bn layer
+    # nad_deep_autoencoder.layers[5].set_weights(autoencoder2.layers[4].get_weights())  # second decoder
+    # nad_deep_autoencoder.layers[6].set_weights(autoencoder1.layers[4].get_weights())  # third decoder
+
     nad_deep_autoencoder = Model(inputs=input_img, outputs=nad_decoded1_da)
 
     sgd1 = SGD(lr=5, decay=0.5, momentum=.85, nesterov=True)
@@ -132,6 +141,8 @@ def ex_3_2_expeirment():
 
 
 
+
+
     dense1 = Dense(500, activation='relu')(nad_decoded1_da)
     # dense1 = Dense(500, activation='relu')(decoded1_da)
     # dense1_drop = Dropout(.3)(dense1)
@@ -146,6 +157,9 @@ def ex_3_2_expeirment():
                    epochs=15, batch_size=600,
                    validation_split=0.25,
                    shuffle=True)
+
+    plot_model(classifier, to_file='nad_deep_autoencoder_plot.png', show_shapes=True, show_layer_names=True)
+
 
     test_preds = classifier.predict(x_test)
     predictions = np.argmax(test_preds, axis=1)
@@ -164,8 +178,9 @@ def ex_3_2(num_of_nodes_in_hidden_layers):
     y_test = np.loadtxt('binMNIST_data/targetdigit_tst.csv', delimiter=',', dtype=float)
 
     target_train = to_categorical(y_train, num_classes=10)
+    target_test = to_categorical(y_test, num_classes=10)
 
-    n_epochs = 8
+    n_epochs = 15
     batch_size = 512
 
     output_train = x_train
@@ -174,13 +189,14 @@ def ex_3_2(num_of_nodes_in_hidden_layers):
 
     for hidden_dim in num_of_nodes_in_hidden_layers:
         model1 = AutoEncoder(encode_dim=hidden_dim, input_dim=output_train.shape[1], l2_value=0.,
-                             encode_activation='relu')
+                             encode_activation='relu', add_batch_norm=True)
 
         # error_callback = ErrorsCallback(output_train, output_train, output_test, output_test)
 
         model1.train(x_train=output_train, n_epochs=n_epochs, batch_size=batch_size, callbacks=[],
                      loss='binary_crossentropy')
 
+        final_model.add(model1.model.layers[-3])
         final_model.add(model1.model.layers[-2])
 
         # output_train = model1.encoder.predict(output_train)
@@ -194,21 +210,33 @@ def ex_3_2(num_of_nodes_in_hidden_layers):
 
     final_model.add(Dense(10, activation='sigmoid'))
 
+
     final_model.compile(optimizer=SGD(lr=.1, decay=0.001, momentum=.95, nesterov=True), loss='mean_squared_error',
                         metrics=['accuracy'])
 
     history = final_model.fit(x_train, target_train,
                               epochs=n_epochs,
                               batch_size=batch_size,
-                              shuffle=True, validation_split=0.25)
+                              shuffle=True)
 
-    predictions = final_model.predict(x_train)
-    predictions_test = final_model.predict(x_test)
+    print(final_model.summary())
+
+    plot_model(final_model, to_file='model_plot.png', show_shapes=True, show_layer_names=True)
+
+
+
+    # predictions = final_model.predict(x_train)
+    # predictions_test = final_model.predict(x_test)
 
     # print(predictions)
 
-    predictions = np.argmax(final_model.predict(x_test), axis=1)
-    print(metrics.classification_report(y_test, predictions))
+    test_preds = final_model.predict(x_test)
+    predictions = np.argmax(test_preds, axis=1)
+    true_digits = np.argmax(target_test, axis=1)
+
+    n_correct = np.sum(np.equal(predictions, true_digits).astype(int))
+    total = float(len(predictions))
+    print("Test Accuracy:", round(n_correct / total, 3))
 
 
 def ex_3_1_v2():
@@ -339,6 +367,6 @@ if __name__ == "__main__":
     # plt.show()
 
     # ex_3_1_v2()
-    # ex_3_2([512,256, 128])
+    ex_3_2([512])
 
-    ex_3_2_expeirment()
+    # ex_3_2_expeirment()

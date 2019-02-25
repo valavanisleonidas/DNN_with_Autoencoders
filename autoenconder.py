@@ -1,5 +1,5 @@
 from keras.callbacks import Callback
-from keras.layers import Input, Dense
+from keras.layers import Input, Dense, BatchNormalization
 from keras.models import Model
 from keras import regularizers
 from keras.initializers import RandomNormal
@@ -7,12 +7,12 @@ from keras.optimizers import SGD
 
 
 class AutoEncoder(object):
-    def __init__(self, input_dim, encode_dim, l2_value=0, encode_activation='relu'):
+    def __init__(self, input_dim, encode_dim, l2_value=0, encode_activation='relu', add_batch_norm=False):
         self.input_dim = input_dim
         self.encode_dim = encode_dim
         self.regularizer = regularizers.l2(l2_value)
         self.encode_activation = encode_activation
-        self._create_model()
+        self._create_model(add_batch_norm)
 
     def train(self, x_train, callbacks, n_epochs, batch_size=128, loss='mse',
               optimizer=SGD(lr=0.1, momentum=0.9)):
@@ -22,21 +22,26 @@ class AutoEncoder(object):
                        epochs=n_epochs,
                        batch_size=batch_size,
                        shuffle=True,
-                       callbacks=callbacks)
+                       callbacks=callbacks,
+                       validation_split=0.25)
 
     def predict(self, x_test):
         encoded = self.encoder.predict(x_test)
         decoded = self.decoder.predict(encoded)
         return decoded
 
-    def _create_model(self):
+    def _create_model(self, add_batch_norm=False):
         original_input = Input(shape=(self.input_dim,))
         encoded = self._create_encoded_layer(original_input)
-        decoded = self._create_decoded_layer(encoded)
+
+        if add_batch_norm:
+            encoded_bn = BatchNormalization()(encoded)
+
+        decoded = self._create_decoded_layer(encoded_bn)
 
         autoencoder = Model(original_input, decoded)
 
-        encoder = Model(original_input, encoded)
+        encoder = Model(original_input, encoded_bn)
 
         encoder_input = Input(shape=(self.encode_dim,))
         decoder_layer = autoencoder.layers[-1]
