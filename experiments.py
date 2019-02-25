@@ -10,8 +10,6 @@ from keras.layers import Input, Dense, BatchNormalization, Dropout
 import time
 from keras import backend as K
 
-from keras.utils import plot_model
-
 
 def ex_3_2(num_of_nodes_in_hidden_layers):
     x_train = np.loadtxt('binMNIST_data/bindigit_trn.csv', delimiter=',', dtype=float)
@@ -60,6 +58,7 @@ def ex_3_2(num_of_nodes_in_hidden_layers):
 
         final_model.add(Dense(10, activation='sigmoid'))
 
+
         error_callback = ErrorsCallback(x_train, target_train, x_test, target_test)
 
         final_model.compile(optimizer=SGD(lr=.1, decay=0.001, momentum=.85, nesterov=True), loss='mean_squared_error',
@@ -84,6 +83,7 @@ def ex_3_2(num_of_nodes_in_hidden_layers):
     final_model.compile(optimizer=SGD(lr=.1, decay=0.001, momentum=.85, nesterov=True), loss='mean_squared_error',
                         metrics=['accuracy'])
 
+
     test_preds = final_model.predict(x_test)
 
     predictions = np.argmax(test_preds, axis=1)
@@ -101,10 +101,10 @@ def ex_3_1_v2():
     x_train = np.loadtxt('binMNIST_data/bindigit_trn.csv', delimiter=',', dtype=float)
     x_test = np.loadtxt('binMNIST_data/bindigit_tst.csv', delimiter=',', dtype=float)
 
-    first_dot = False
+    first_dot = True
     second_dot = False
     third_dot = False
-    fourth_dot = True
+    fourth_dot = False
     error_trains = []
     n_epochs = 200
 
@@ -169,33 +169,47 @@ def ex_3_1_v2():
                          title='1500 Nodes l2=0.0001')
 
     if first_dot:
-        encod_dims = [512, 256, 128, 64, 32]
+        # encod_dims = [800,850,1000, 1200, 1500]
+        encod_dims = [32, 64,128,256,512,800,850,1000, 1200, 1500 ]
         error_trains = []
-        n_epochs = 100
+        n_epochs = 10
         times = []
-        for encode_dim in encod_dims:
-            start_time = time.time()
-            error_callback = ErrorsCallback(x_train, x_train, x_test, x_test)
 
-            model1 = AutoEncoder(encode_dim=encode_dim, input_dim=784)
+        total_sparse = []
+        regularizer = [0.1, 0.001, 0]
+        for reg in regularizer:
+            sparseness = []
+            for encode_dim in encod_dims:
+                start_time = time.time()
+                error_callback = ErrorsCallback(x_train, x_train, x_test, x_test)
 
-            model1.train(x_train=x_train, n_epochs=n_epochs, batch_size=128, callbacks=[error_callback],
-                         loss='binary_crossentropy')
+                model1 = AutoEncoder(encode_dim=encode_dim, input_dim=784, l2_value=reg)
 
-            reconstructed = model1.predict(x_test)
-            end_time = time.time() - start_time
-            times.append(str(round(end_time, 2)))
-            error_trains.append(error_callback.mse_train)
+                model1.train(x_train=x_train, n_epochs=n_epochs, batch_size=512, callbacks=[error_callback],
+                             loss='binary_crossentropy')
 
-            # Utils.plot_decoded_imgs(x_test, reconstructed)
+                reconstructed = model1.encoder.predict(x_train)
+                reconstructed = np.where(reconstructed < 0.1, 0, reconstructed)
 
-        legends = ['512 Nodes, ' + times[0] + ' sec',
-                   '256 Nodes, ' + times[1] + ' sec',
-                   '128 Nodes, ' + times[2] + ' sec',
-                   '64 Nodes, ' + times[3] + ' sec',
-                   '32 Nodes, ' + times[4] + ' sec']
-        Utils.plot_error(error_trains, legend_names=legends, num_epochs=len(error_trains[0]),
-                         title='Auto encoder for various encoding dimensions')
+                num = reconstructed.size
+                zeros = num - np.count_nonzero(reconstructed)
+
+                sparse = zeros / num
+
+                sparseness.append(sparse)
+
+                end_time = time.time() - start_time
+                times.append(str(round(end_time, 2)))
+                error_trains.append(error_callback.mse_train)
+
+                # Utils.plot_decoded_imgs(x_test, reconstructed)
+
+            total_sparse.append(sparseness)
+
+        legends = ['% of sparseness with l2 = {0}'.format(regularizer[0]), '% of sparseness with l2 = {0}'.format(regularizer[1]),
+                   '% of sparseness with l2 = {0}'.format(regularizer[2])]
+        Utils.plot_sparseness(total_sparse, legend_names=legends, nodes=encod_dims,
+                              title='Percentage of sparseness for various encoding dimensions')
 
 
 if __name__ == "__main__":

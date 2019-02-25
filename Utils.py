@@ -57,5 +57,26 @@ def plot_error(error, legend_names, num_epochs, title):
     plt.show()
 
 
+def plot_sparseness(sparseness, legend_names, nodes, title):
+    # fig config
+    plt.figure()
+    plt.grid(True)
+
+    # plt.ylim(0, 10)
+    plt.xlim(-0.5, nodes[-1])
+    plt.ylim(0., 1.)
+
+    plt.xlabel('Number of nodes in hidden layer')
+    plt.ylabel('% of sparseness')
+
+    for i in range(len(sparseness)):
+        plt.plot(nodes, sparseness[i][:])
+
+    plt.title(title)
+    plt.legend(legend_names, loc='upper right')
+
+    plt.show()
+
+
 if __name__ == '__main__':
     pass
