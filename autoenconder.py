@@ -1,5 +1,5 @@
 from keras.callbacks import Callback
-from keras.layers import Input, Dense, BatchNormalization
+from keras.layers import Input, Dense, BatchNormalization, Dropout
 from keras.models import Model
 from keras import regularizers
 from keras.initializers import RandomNormal
@@ -7,11 +7,14 @@ from keras.optimizers import SGD
 
 
 class AutoEncoder(object):
-    def __init__(self, input_dim, encode_dim, l2_value=0, encode_activation='relu', add_batch_norm=False):
+    def __init__(self, input_dim, encode_dim, l2_value=0, encode_activation='relu', add_batch_norm=False,
+                 add_dropout=False):
         self.input_dim = input_dim
         self.encode_dim = encode_dim
         self.regularizer = regularizers.l2(l2_value)
         self.encode_activation = encode_activation
+        self.add_dropout = add_dropout
+
         self._create_model(add_batch_norm)
 
     def train(self, x_train, callbacks, n_epochs, batch_size=128, loss='mse',
@@ -35,13 +38,13 @@ class AutoEncoder(object):
         encoded = self._create_encoded_layer(original_input)
 
         if add_batch_norm:
-            encoded_bn = BatchNormalization()(encoded)
+            encoded = BatchNormalization()(encoded)
 
-        decoded = self._create_decoded_layer(encoded_bn)
+        decoded = self._create_decoded_layer(encoded)
 
         autoencoder = Model(original_input, decoded)
 
-        encoder = Model(original_input, encoded_bn)
+        encoder = Model(original_input, encoded)
 
         encoder_input = Input(shape=(self.encode_dim,))
         decoder_layer = autoencoder.layers[-1]

@@ -43,7 +43,7 @@ def plot_error(error, legend_names, num_epochs, title):
     plt.grid(True)
 
     # plt.ylim(0, 10)
-    plt.xlim(-0.5, num_epochs)
+    plt.xlim(0., num_epochs)
     plt.ylim(0., 1.)
 
     epochs = np.arange(0, num_epochs, 1)
