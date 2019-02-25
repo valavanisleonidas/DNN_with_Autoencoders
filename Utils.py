@@ -39,6 +39,30 @@ def plot_decoded_imgs(x_test, reconstructed):
 
     plt.show()
 
+def show_images(images, rows, title=None):
+
+    ncols = int(rows + 1)
+    nrows = int(rows + 1)
+
+    # create the plots
+    fig = plt.figure()
+    axes = [fig.add_subplot(nrows, ncols, r * ncols + c) for r in range(1, nrows) for c in range(1, ncols)]
+
+    counter = 0
+    # add some data
+    for ax in axes:
+        image = images[counter]
+        ax.imshow(image.reshape(28, 28))
+        counter += 1
+
+    # remove the x and y ticks
+    for ax in axes:
+        ax.set_xticks([])
+        ax.set_yticks([])
+
+
+    plt.show()
+
 
 def plot_error(error, legend_names, num_epochs, title):
     # fig config
