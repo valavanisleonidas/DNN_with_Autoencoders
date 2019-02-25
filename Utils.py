@@ -21,18 +21,21 @@ def add_noise(x, percentage):
 def plot_decoded_imgs(x_test, reconstructed):
     plt.figure(figsize=(20, 4))
     plt.gray()
-    for i in range(10):
+    counter = 0
+    for i in [156, 155, 259, 1584, 154, 160, 383, 388, 253, 153]:
         # display original
-        ax = plt.subplot(2, 10, i + 1)
+        ax = plt.subplot(2, 10, counter + 1)
         plt.imshow(x_test[i].reshape(28, 28))
         ax.get_xaxis().set_visible(False)
         ax.get_yaxis().set_visible(False)
 
         # display reconstruction
-        ax = plt.subplot(2, 10, i + 11)
+        ax = plt.subplot(2, 10, counter + 11)
         plt.imshow(reconstructed[i].reshape(28, 28))
         ax.get_xaxis().set_visible(False)
         ax.get_yaxis().set_visible(False)
+
+        counter += 1
 
     plt.show()
 
