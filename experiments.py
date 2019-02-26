@@ -1,17 +1,15 @@
-from keras import metrics
 from keras.optimizers import SGD
 from keras.utils import to_categorical
-import matplotlib.pyplot as plt
 import Utils
 import numpy as np
 from autoenconder import AutoEncoder, ErrorsCallback
-from keras.models import Model, Sequential, model_from_json
-from keras.layers import Input, Dense, BatchNormalization, Dropout
+from keras.models import Sequential, model_from_json
+from keras.layers import Dense
 import time
 from keras import backend as K
 
 
-def ex_3_2(num_of_nodes_in_hidden_layers, n_epochs_1 = 10):
+def ex_3_2(num_of_nodes_in_hidden_layers, n_epochs_1=10, show_hidden_weights=False):
     x_train = np.loadtxt('binMNIST_data/bindigit_trn.csv', delimiter=',', dtype=float)
     x_test = np.loadtxt('binMNIST_data/bindigit_tst.csv', delimiter=',', dtype=float)
 
@@ -42,6 +40,7 @@ def ex_3_2(num_of_nodes_in_hidden_layers, n_epochs_1 = 10):
         if len(num_of_nodes_in_hidden_layers) == 0:
             final_model.add(Dense(784, input_shape=(784,)))
 
+        counter = 0
         for hidden_dim in num_of_nodes_in_hidden_layers:
             model1 = AutoEncoder(encode_dim=hidden_dim, input_dim=output_train.shape[1], l2_value=0.,
                                  encode_activation='relu', add_batch_norm=True)
@@ -49,7 +48,23 @@ def ex_3_2(num_of_nodes_in_hidden_layers, n_epochs_1 = 10):
             model1.train(x_train=output_train, n_epochs=n_epochs, batch_size=batch_size, callbacks=[],
                          loss='mean_squared_error')
 
-            final_model.add(model1.model.layers[-3])
+
+            # encoded
+            encoder_layer = model1.model.layers[-3]
+            final_model.add(encoder_layer)
+
+            if show_hidden_weights:
+                w = encoder_layer.get_weights()[0]
+                w = np.array(w).T
+                print(np.array(w.shape))
+                rows_cols = [[20, 20], [20, 20], [15, 10]]
+                dimensions = [[28, 28], [23, 23], [20, 20]]
+
+                Utils.show_images(w, rows_cols[counter][0], rows_cols[counter][1],
+                                  title='Weights for each hidden unit with {0} epochs'.format(n_epochs), dimensions=dimensions[counter])
+                counter += 1
+
+            # batch normalization
             final_model.add(model1.model.layers[-2])
 
             get_hidden_layer_output = K.function([model1.model.layers[0].input],
@@ -69,8 +84,8 @@ def ex_3_2(num_of_nodes_in_hidden_layers, n_epochs_1 = 10):
                                   epochs=n_epochs,
                                   batch_size=batch_size,
                                   callbacks=[],
-                                  # validation_data=(x_test, target_test),
-                                  validation_split=0.3,
+                                  validation_data=(x_test, target_test),
+                                  # validation_split=0.3,
                                   shuffle=True)
 
         if save is True:
@@ -93,12 +108,12 @@ def ex_3_2(num_of_nodes_in_hidden_layers, n_epochs_1 = 10):
     total = float(len(predictions))
     print("Test Accuracy:", round(n_correct / total, 3) * 100, "%")
 
-
-    test_error = history.history['val_loss']
+    test_error = history.history['val_acc']
     errors = [history.history['loss'], history.history['val_loss']]
     legends = ['mse_train', 'mse_test']
     # Utils.plot_error(errors, legend_names=legends, num_epochs=n_epochs, title="Performance")
     return test_error
+
 
 def ex_3_1_v2():
     x_train = np.loadtxt('binMNIST_data/bindigit_trn.csv', delimiter=',', dtype=float)
@@ -225,25 +240,27 @@ def ex_3_1_v2():
 
 
 def ex_3_2_greedy():
-    n_epochs = 50
+    n_epochs = 10
 
-    # errors = []
-    # errors.append(ex_3_2([],n_epochs))
-    # errors.append(ex_3_2([512],n_epochs))
-    # errors.append(ex_3_2([512,400],n_epochs))
-    # errors.append(ex_3_2([512,400,300],n_epochs))
+    # acc = []
+    # acc.append(ex_3_2([], n_epochs))
+    # acc.append(ex_3_2([512], n_epochs))
+    # acc.append(ex_3_2([512, 400], n_epochs))
+    # acc.append(ex_3_2([529, 400, 144], n_epochs))
+
+    # legends = ['784 -> 10', '784 -> 512 -> 10', '784 -> 512 -> 400 -> 10', '784 -> 512 -> 400 -> 150 -> 10']
+    # Utils.plot_acuracy(acc, legend_names=legends, num_epochs=n_epochs, title="Performance on deep autoencoders")
+
+    # acc = []
+    # acc.append(ex_3_2([512,400,300],n_epochs))
+    # acc.append(ex_3_2([512,400, 150],n_epochs))
+    # acc.append(ex_3_2([512,400, 100],n_epochs))
     #
-    # legends = ['784 -> 10', '784 -> 512 -> 10', '784 -> 512 -> 400 -> 10',  '784 -> 512 -> 400 -> 300 -> 10']
-    # Utils.plot_error(errors, legend_names=legends, num_epochs=n_epochs, title="Performance on deep autoencoders")
+    # legends = ['784 -> 512 -> 300 -> 10', '784 -> 512 -> 150 -> 10', '784 -> 512 -> 100 -> 10']
+    # Utils.plot_acuracy(errors, legend_names=legends, num_epochs=n_epochs, title="Performance")
 
-    errors = []
-    errors.append(ex_3_2([512,400],n_epochs))
-    errors.append(ex_3_2([512,300],n_epochs))
-    errors.append(ex_3_2([512,250],n_epochs))
 
-    legends = ['784 -> 512 -> 400 -> 10', '784 -> 512 -> 300 -> 10', '784 -> 512 -> 250 -> 10']
-    Utils.plot_error(errors, legend_names=legends, num_epochs=n_epochs, title="Performance")
-
+    ex_3_2([529, 400, 144], n_epochs, show_hidden_weights=True)
 
 
 if __name__ == "__main__":

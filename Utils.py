@@ -10,7 +10,7 @@ def add_noise(x, percentage):
     for i, img in enumerate(copy.deepcopy(x)):
         N = len(img)
         n_indices = int(percentage * N)
-        indices = np.random.choice(np.arange(N), n_indices,replace=False)
+        indices = np.random.choice(np.arange(N), n_indices, replace=False)
         img[indices] += np.random.normal(loc=0., scale=1, size=img[indices].shape)
         img = np.clip(img, 0, 1)
         noisy[i] = img
@@ -39,8 +39,8 @@ def plot_decoded_imgs(x_test, reconstructed):
 
     plt.show()
 
-def show_images(images, rows, columns, title=None):
 
+def show_images(images, rows, columns, title=None, dimensions=(28, 28)):
     ncols = int(columns + 1)
     nrows = int(rows + 1)
 
@@ -51,8 +51,11 @@ def show_images(images, rows, columns, title=None):
     counter = 0
     # add some data
     for ax in axes:
+        if counter >= len(images):
+            ax.axis('off')
+            continue
         image = images[counter]
-        ax.imshow(image.reshape(28, 28))
+        ax.imshow(image.reshape(dimensions[0], dimensions[1]))
         counter += 1
 
     # remove the x and y ticks
@@ -71,7 +74,7 @@ def plot_error(error, legend_names, num_epochs, title):
 
     # plt.ylim(0, 10)
     plt.xlim(0., num_epochs)
-    # plt.ylim(0., 1.)
+    plt.ylim(0.5, 1.)
 
     epochs = np.arange(0, num_epochs, 1)
 
@@ -79,10 +82,33 @@ def plot_error(error, legend_names, num_epochs, title):
         plt.plot(epochs, error[i][:])
 
     plt.xlabel('Epochs')
-    plt.ylabel('Accuracy')
+    plt.ylabel('Error')
 
     plt.title(title)
     plt.legend(legend_names, loc='upper right')
+
+    plt.show()
+
+
+def plot_acuracy(accuracy, legend_names, num_epochs, title):
+    # fig config
+    plt.figure()
+    plt.grid(True)
+
+    # plt.ylim(0, 10)
+    plt.xlim(0., num_epochs)
+    plt.ylim(0.5, 1.)
+
+    epochs = np.arange(0, num_epochs, 1)
+
+    for i in range(len(accuracy)):
+        plt.plot(epochs, accuracy[i][:])
+
+    plt.xlabel('Epochs')
+    plt.ylabel('Accuracy')
+
+    plt.title(title)
+    plt.legend(legend_names, loc='lower right')
 
     plt.show()
 
