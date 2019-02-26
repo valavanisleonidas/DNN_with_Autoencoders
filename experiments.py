@@ -35,6 +35,7 @@ def ex_3_2(num_of_nodes_in_hidden_layers, n_epochs_1=10, show_hidden_weights=Fal
 
     else:
         output_train = x_train
+        output_test = x_test
 
         final_model = Sequential()
         if len(num_of_nodes_in_hidden_layers) == 0:
@@ -70,8 +71,22 @@ def ex_3_2(num_of_nodes_in_hidden_layers, n_epochs_1=10, show_hidden_weights=Fal
             get_hidden_layer_output = K.function([model1.model.layers[0].input],
                                                  [model1.model.layers[-2].output])
             output_train = get_hidden_layer_output([output_train])[0]
+            output_test = get_hidden_layer_output([output_test])[0]
 
             print(output_train.shape)
+
+        from sklearn.linear_model import LogisticRegression
+        clf = LogisticRegression(random_state=0, solver='lbfgs',
+                                 multi_class='multinomial').fit(output_train, y_train)
+        score = clf.score(output_test,y_test)
+        print("Test Accuracy using logistic with encoded data: :::", round(score, 3) * 100, "%")
+
+        clf = LogisticRegression(random_state=0, solver='lbfgs',
+                                 multi_class='multinomial').fit(x_train, y_train)
+        score = clf.score(x_test, y_test)
+        print("Test Accuracy using logistic from the begginging: :::", round(score, 3) * 100, "%")
+
+
 
         final_model.add(Dense(10, activation='sigmoid'))
 
@@ -240,7 +255,9 @@ def ex_3_1_v2():
 
 
 def ex_3_2_greedy():
-    n_epochs = 10
+    n_epochs = 5
+
+    ex_3_2([512], n_epochs)
 
     # acc = []
     # acc.append(ex_3_2([], n_epochs))
@@ -260,7 +277,7 @@ def ex_3_2_greedy():
     # Utils.plot_acuracy(errors, legend_names=legends, num_epochs=n_epochs, title="Performance")
 
 
-    ex_3_2([529, 400, 144], n_epochs, show_hidden_weights=True)
+    # ex_3_2([529, 400, 144], n_epochs, show_hidden_weights=True)
 
 
 if __name__ == "__main__":
