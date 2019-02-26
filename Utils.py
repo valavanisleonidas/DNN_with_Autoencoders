@@ -39,9 +39,9 @@ def plot_decoded_imgs(x_test, reconstructed):
 
     plt.show()
 
-def show_images(images, rows, title=None):
+def show_images(images, rows, columns, title=None):
 
-    ncols = int(rows + 1)
+    ncols = int(columns + 1)
     nrows = int(rows + 1)
 
     # create the plots
@@ -60,7 +60,7 @@ def show_images(images, rows, title=None):
         ax.set_xticks([])
         ax.set_yticks([])
 
-
+    fig.suptitle(title)
     plt.show()
 
 
