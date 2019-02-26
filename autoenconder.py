@@ -25,8 +25,7 @@ class AutoEncoder(object):
                        epochs=n_epochs,
                        batch_size=batch_size,
                        shuffle=True,
-                       callbacks=callbacks,
-                       validation_split=0.25)
+                       callbacks=callbacks)
 
     def predict(self, x_test):
         encoded = self.encoder.predict(x_test)

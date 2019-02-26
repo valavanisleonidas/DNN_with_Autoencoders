@@ -71,12 +71,15 @@ def plot_error(error, legend_names, num_epochs, title):
 
     # plt.ylim(0, 10)
     plt.xlim(0., num_epochs)
-    plt.ylim(0., 1.)
+    # plt.ylim(0., 1.)
 
     epochs = np.arange(0, num_epochs, 1)
 
     for i in range(len(error)):
         plt.plot(epochs, error[i][:])
+
+    plt.xlabel('Epochs')
+    plt.ylabel('Accuracy')
 
     plt.title(title)
     plt.legend(legend_names, loc='upper right')
