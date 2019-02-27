@@ -4,28 +4,35 @@ from keras.models import Model
 from keras import regularizers
 from keras.initializers import RandomNormal
 from keras.optimizers import SGD
+from keras.layers import GaussianNoise
 
 
 class AutoEncoder(object):
     def __init__(self, input_dim, encode_dim, l2_value=0, encode_activation='relu', add_batch_norm=False,
-                 add_dropout=False):
+                 add_dropout=False, noise=0):
         self.input_dim = input_dim
         self.encode_dim = encode_dim
         self.regularizer = regularizers.l2(l2_value)
         self.encode_activation = encode_activation
         self.add_dropout = add_dropout
-
+        self.noise = noise
         self._create_model(add_batch_norm)
 
     def train(self, x_train, callbacks, n_epochs, batch_size=128, loss='mse',
-              optimizer=SGD(lr=0.1, momentum=0.9)):
+              optimizer=SGD(lr=0.1, momentum=0.9), y_train=None):
+
+        if y_train is None:
+            y_train = x_train
+
         self.model.compile(optimizer=optimizer, loss=loss)
 
-        self.model.fit(x_train, x_train,
+        history = self.model.fit(x_train, y_train,
                        epochs=n_epochs,
                        batch_size=batch_size,
                        shuffle=True,
                        callbacks=callbacks)
+
+        return history
 
     def predict(self, x_test):
         encoded = self.encoder.predict(x_test)
@@ -34,7 +41,9 @@ class AutoEncoder(object):
 
     def _create_model(self, add_batch_norm=False):
         original_input = Input(shape=(self.input_dim,))
-        encoded = self._create_encoded_layer(original_input)
+        noisy_input = GaussianNoise(self.noise)(original_input)
+
+        encoded = self._create_encoded_layer(noisy_input)
 
         if add_batch_norm:
             encoded = BatchNormalization()(encoded)

@@ -1,5 +1,4 @@
 import numpy as np
-import os
 import matplotlib.pyplot as plt
 import copy
 
@@ -7,13 +6,8 @@ import copy
 def add_noise(x, percentage):
     noisy = copy.deepcopy(x)
 
-    for i, img in enumerate(copy.deepcopy(x)):
-        N = len(img)
-        n_indices = int(percentage * N)
-        indices = np.random.choice(np.arange(N), n_indices, replace=False)
-        img[indices] += np.random.normal(loc=0., scale=1, size=img[indices].shape)
-        img = np.clip(img, 0, 1)
-        noisy[i] = img
+    noisy += np.random.normal(loc=0., scale=percentage, size=noisy.shape)
+    noisy = np.clip(noisy, 0, 1)
 
     return noisy
 

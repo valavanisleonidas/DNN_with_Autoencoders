@@ -145,10 +145,10 @@ def ex_3_1():
 
     first_dot = False
     second_dot = False
-    third_dot = False
-    fourth_dot = True
+    third_dot = True
+    fourth_dot = False
     error_trains = []
-    n_epochs = 100
+    n_epochs = 50
 
     rows_cols = [[10, 10], [10, 20], [20, 20]]
     if fourth_dot:
@@ -175,20 +175,20 @@ def ex_3_1():
 
     if third_dot:
         noise_factors = [0.1, 0.2, 0.3, 0.4]
+
+
         for noise in noise_factors:
             x_train_noisy = Utils.add_noise(x_train, noise)
             x_test_noisy = Utils.add_noise(x_test, noise)
 
-            error_callback = ErrorsCallback(x_train_noisy, x_train, x_test_noisy, x_test)
+            model1 = AutoEncoder(encode_dim=1000, input_dim=784, l2_value=0., encode_activation='relu', noise=noise)
 
-            model1 = AutoEncoder(encode_dim=512, input_dim=784, l2_value=0., encode_activation='relu')
-
-            model1.train(x_train=x_train, n_epochs=n_epochs, batch_size=128, callbacks=[error_callback],
-                         loss='binary_crossentropy')
+            history = model1.train(x_train=x_train, y_train=x_train, n_epochs=n_epochs, batch_size=128, callbacks=[],
+                                   loss='binary_crossentropy')
 
             reconstructed = model1.predict(x_test_noisy)
 
-            error_trains.append(error_callback.mse_train)
+            error_trains.append(history.history['loss'])
 
             Utils.plot_decoded_imgs(x_test_noisy, reconstructed)
 
@@ -288,4 +288,4 @@ if __name__ == "__main__":
 
     # ex_3_2([])
 
-    ex_3_2_greedy()
+    # ex_3_2_greedy()
