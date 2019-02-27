@@ -18,8 +18,8 @@ def add_noise(x, percentage):
     return noisy
 
 
-def plot_decoded_imgs(x_test, reconstructed):
-    plt.figure(figsize=(20, 4))
+def plot_decoded_imgs(x_test, reconstructed, title = ''):
+    fig = plt.figure(figsize=(20, 4))
     plt.gray()
     counter = 0
     for i in [156, 155, 259, 1584, 154, 160, 383, 388, 253, 153]:
@@ -37,6 +37,7 @@ def plot_decoded_imgs(x_test, reconstructed):
 
         counter += 1
 
+    fig.suptitle(title)
     plt.show()
 
 

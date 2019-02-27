@@ -1,5 +1,5 @@
 from keras.optimizers import SGD
-from keras.utils import to_categorical
+from keras.utils import to_categorical, plot_model
 import Utils
 import numpy as np
 from autoenconder import AutoEncoder, ErrorsCallback
@@ -7,9 +7,11 @@ from keras.models import Sequential, model_from_json
 from keras.layers import Dense
 import time
 from keras import backend as K
+from sklearn.linear_model import LogisticRegression
 
 
-def ex_3_2(num_of_nodes_in_hidden_layers, n_epochs_1=10, show_hidden_weights=False):
+def ex_3_2(num_of_nodes_in_hidden_layers, n_epochs_1=10, show_hidden_weights=False, use_logistic_regression=False,
+           add_decoding_layers = False):
     x_train = np.loadtxt('binMNIST_data/bindigit_trn.csv', delimiter=',', dtype=float)
     x_test = np.loadtxt('binMNIST_data/bindigit_tst.csv', delimiter=',', dtype=float)
 
@@ -37,6 +39,7 @@ def ex_3_2(num_of_nodes_in_hidden_layers, n_epochs_1=10, show_hidden_weights=Fal
         output_train = x_train
         output_test = x_test
 
+        decoder_layers = []
         final_model = Sequential()
         if len(num_of_nodes_in_hidden_layers) == 0:
             final_model.add(Dense(784, input_shape=(784,)))
@@ -53,7 +56,6 @@ def ex_3_2(num_of_nodes_in_hidden_layers, n_epochs_1=10, show_hidden_weights=Fal
             # encoded
             encoder_layer = model1.model.layers[-3]
             final_model.add(encoder_layer)
-
             if show_hidden_weights:
                 w = encoder_layer.get_weights()[0]
                 w = np.array(w).T
@@ -65,6 +67,7 @@ def ex_3_2(num_of_nodes_in_hidden_layers, n_epochs_1=10, show_hidden_weights=Fal
                                   title='Weights for each hidden unit with {0} epochs'.format(n_epochs), dimensions=dimensions[counter])
                 counter += 1
 
+            decoder_layers.append(model1.model.layers[-1])
             # batch normalization
             final_model.add(model1.model.layers[-2])
 
@@ -75,17 +78,23 @@ def ex_3_2(num_of_nodes_in_hidden_layers, n_epochs_1=10, show_hidden_weights=Fal
 
             print(output_train.shape)
 
-        from sklearn.linear_model import LogisticRegression
-        clf = LogisticRegression(random_state=0, solver='lbfgs',
-                                 multi_class='multinomial').fit(output_train, y_train)
-        score = clf.score(output_test,y_test)
-        print("Test Accuracy using logistic with encoded data: :::", round(score, 3) * 100, "%")
+        if use_logistic_regression :
+            clf = LogisticRegression(random_state=0, solver='lbfgs',
+                                     multi_class='multinomial').fit(output_train, y_train)
+            score = clf.score(output_test,y_test)
+            print("Test Accuracy using logistic with encoded data: :::", round(score, 3) * 100, "%")
 
-        clf = LogisticRegression(random_state=0, solver='lbfgs',
-                                 multi_class='multinomial').fit(x_train, y_train)
-        score = clf.score(x_test, y_test)
-        print("Test Accuracy using logistic from the begginging: :::", round(score, 3) * 100, "%")
+            clf = LogisticRegression(random_state=0, solver='lbfgs',
+                                     multi_class='multinomial').fit(x_train, y_train)
+            score = clf.score(x_test, y_test)
+            print("Test Accuracy using logistic from the begginging: :::", round(score, 3) * 100, "%")
 
+        if add_decoding_layers:
+            for layer in reversed(decoder_layers):
+                final_model.add(layer)
+
+            reconstructed = final_model.predict(x_test)
+            Utils.plot_decoded_imgs(x_test, reconstructed, 'Reconstruction using three hidden layers')
 
 
         final_model.add(Dense(10, activation='sigmoid'))
@@ -111,7 +120,7 @@ def ex_3_2(num_of_nodes_in_hidden_layers, n_epochs_1=10, show_hidden_weights=Fal
             final_model.save_weights("model.h5")
             print("Saved model to disk")
 
-    # plot_model(final_model, to_file='model_plot.png', show_shapes=True, show_layer_names=True)
+    plot_model(final_model, to_file='model_plot.png', show_shapes=True, show_layer_names=True)
     final_model.compile(optimizer=SGD(lr=.1, decay=0.001, momentum=.85, nesterov=True), loss='mean_squared_error',
                         metrics=['accuracy'])
 
@@ -130,7 +139,7 @@ def ex_3_2(num_of_nodes_in_hidden_layers, n_epochs_1=10, show_hidden_weights=Fal
     return test_error
 
 
-def ex_3_1_v2():
+def ex_3_1():
     x_train = np.loadtxt('binMNIST_data/bindigit_trn.csv', delimiter=',', dtype=float)
     x_test = np.loadtxt('binMNIST_data/bindigit_tst.csv', delimiter=',', dtype=float)
 
@@ -255,35 +264,28 @@ def ex_3_1_v2():
 
 
 def ex_3_2_greedy():
-    n_epochs = 5
+    n_epochs = 50
 
-    ex_3_2([512], n_epochs)
+    ex_3_2([512,400,300], n_epochs, add_decoding_layers=True)
 
     # acc = []
     # acc.append(ex_3_2([], n_epochs))
     # acc.append(ex_3_2([512], n_epochs))
     # acc.append(ex_3_2([512, 400], n_epochs))
-    # acc.append(ex_3_2([529, 400, 144], n_epochs))
-
-    # legends = ['784 -> 10', '784 -> 512 -> 10', '784 -> 512 -> 400 -> 10', '784 -> 512 -> 400 -> 150 -> 10']
-    # Utils.plot_acuracy(acc, legend_names=legends, num_epochs=n_epochs, title="Performance on deep autoencoders")
-
-    # acc = []
-    # acc.append(ex_3_2([512,400,300],n_epochs))
-    # acc.append(ex_3_2([512,400, 150],n_epochs))
-    # acc.append(ex_3_2([512,400, 100],n_epochs))
+    # acc.append(ex_3_2([512, 400, 150], n_epochs))
+    # acc.append(ex_3_2([512, 400, 150], n_epochs,add_decoding_layers=True))
     #
-    # legends = ['784 -> 512 -> 300 -> 10', '784 -> 512 -> 150 -> 10', '784 -> 512 -> 100 -> 10']
-    # Utils.plot_acuracy(errors, legend_names=legends, num_epochs=n_epochs, title="Performance")
+    # legends = ['784 -> 10', '784 -> 512 -> 10', '784 -> 512 -> 400 -> 10', '784 -> 512 -> 400 -> 150 -> 10',
+    #            '784 -> 512 -> 400 -> 150 -> 400 -> 512 -> 784 -> 10']
+    # Utils.plot_acuracy(acc, legend_names=legends, num_epochs=n_epochs, title="Performance on deep autoencoders")
 
 
     # ex_3_2([529, 400, 144], n_epochs, show_hidden_weights=True)
 
 
 if __name__ == "__main__":
-    # ex_3_1_v2()
+    ex_3_1()
 
     # ex_3_2([])
-    # ex_3_2_expeirment()
 
     ex_3_2_greedy()
